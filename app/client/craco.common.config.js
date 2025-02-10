@@ -4,18 +4,11 @@ const path = require("path");
 const webpack = require("webpack");
 
 module.exports = {
-  devServer: {
-    client: {
-      webSocketURL: {
-        hostname: "127.0.0.1",
-        pathname: "/ws",
-        port: 3000,
-        protocol: "ws",
-      },
-    },
+  eslint: {
+    enable: false,
   },
-  babel: {
-    plugins: ["babel-plugin-lodash"],
+  typescript: {
+    enableTypeChecking: process.env.ENABLE_TYPE_CHECKING !== "false",
   },
   webpack: {
     configure: {
@@ -112,10 +105,17 @@ module.exports = {
       ignoreWarnings: [
         function ignoreSourcemapsloaderWarnings(warning) {
           return (
-            warning.module &&
-            warning.module.resource.includes("node_modules") &&
-            warning.details &&
-            warning.details.includes("source-map-loader")
+            (warning.module?.resource.includes("node_modules") &&
+              warning.details?.includes("source-map-loader")) ??
+            false
+          );
+        },
+        function ignorePackageWarnings(warning) {
+          return (
+            warning.module?.resource.includes(
+              "/node_modules/@babel/standalone/babel.js",
+            ) ||
+            warning.module?.resource.includes("/node_modules/sass/sass.dart.js")
           );
         },
       ],
