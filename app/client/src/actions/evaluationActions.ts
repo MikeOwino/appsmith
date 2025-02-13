@@ -1,16 +1,20 @@
-import type { ReduxAction } from "@appsmith/constants/ReduxActionConstants";
-import { ReduxActionTypes } from "@appsmith/constants/ReduxActionConstants";
+import type { ReduxAction } from "./ReduxActionTypes";
+import { ReduxActionTypes } from "ee/constants/ReduxActionConstants";
 import { intersection } from "lodash";
 import type { DependencyMap } from "utils/DynamicBindingUtils";
 import type { QueryActionConfig } from "entities/Action";
 import type { DatasourceConfiguration } from "entities/Datasource";
-import type { DiffWithReferenceState } from "workers/Evaluation/helpers";
+import type { DiffWithNewTreeState } from "workers/Evaluation/helpers";
 import {
   EVALUATE_REDUX_ACTIONS,
   EVAL_AND_LINT_REDUX_ACTIONS,
   LINT_REDUX_ACTIONS,
   LOG_REDUX_ACTIONS,
-} from "@appsmith/actions/evaluationActionsList";
+} from "ee/actions/evaluationActionsList";
+import type {
+  ConditionalOutput,
+  DynamicValues,
+} from "reducers/evaluationReducers/formEvaluationReducer";
 
 export const shouldTriggerEvaluation = (action: ReduxAction<unknown>) => {
   return (
@@ -29,8 +33,10 @@ export const getAllActionTypes = (action: ReduxAction<unknown>) => {
     const batchedActionTypes = action.payload.map(
       (batchedAction) => batchedAction.type as string,
     );
+
     return batchedActionTypes;
   }
+
   return [action.type];
 };
 
@@ -48,6 +54,7 @@ export function shouldLog(action: ReduxAction<unknown>) {
     const batchedActionTypes = action.payload.map(
       (batchedAction) => batchedAction.type,
     );
+
     return batchedActionTypes.some(
       (actionType) => LOG_REDUX_ACTIONS[actionType],
     );
@@ -57,8 +64,8 @@ export function shouldLog(action: ReduxAction<unknown>) {
 }
 
 export const setEvaluatedTree = (
-  updates: DiffWithReferenceState[],
-): ReduxAction<{ updates: DiffWithReferenceState[] }> => {
+  updates: DiffWithNewTreeState[],
+): ReduxAction<{ updates: DiffWithNewTreeState[] }> => {
   return {
     type: ReduxActionTypes.SET_EVALUATED_TREE,
     payload: { updates },
@@ -76,7 +83,11 @@ export const setDependencyMap = (
 
 // Called when a form is being setup, for setting up the base condition evaluations for the form
 export const initFormEvaluations = (
+  // TODO: Fix this the next time the file is edited
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   editorConfig: any,
+  // TODO: Fix this the next time the file is edited
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   settingConfig: any,
   formId: string,
 ) => {
@@ -118,4 +129,20 @@ const FORCE_EVAL_ACTIONS = {
 
 export const shouldForceEval = (action: ReduxAction<unknown>) => {
   return !!FORCE_EVAL_ACTIONS[action.type];
+};
+
+export const fetchFormDynamicValNextPage = (payload?: {
+  value: ConditionalOutput;
+  dynamicFetchedValues: DynamicValues;
+  actionId: string;
+  datasourceId: string;
+  pluginId: string;
+  identifier: string;
+}) => {
+  if (payload) {
+    return {
+      type: ReduxActionTypes.FETCH_FORM_DYNAMIC_VAL_NEXT_PAGE_INIT,
+      payload,
+    };
+  }
 };
